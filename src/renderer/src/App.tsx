@@ -1,4 +1,5 @@
 import InputField from "./elements/InputField"
+import Button from "./elements/Button"
 
 function App(): JSX.Element {
   return (
@@ -21,6 +22,15 @@ function App(): JSX.Element {
         type="password"
         placeholder="Password"
         />
+        <Button
+        children="Login"
+        buttonType="submit"
+        buttonVariant="primary"
+        customClass=""
+
+
+        />
+
     </>
   )
 }
