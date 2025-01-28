@@ -1,14 +1,14 @@
-import React from "react";
-import Signup from "./pages/Singup"
-import Login from "./pages/Login";
+import { Suspense, JSX } from 'react'
+import { RouterProvider } from 'react-router-dom'
+
+import Loader from '@renderer/components/Loader'
+import MainRoutes from '@renderer/routes/BaseRoute'
 
 function App(): JSX.Element {
   return (
-    <>
-    <Login />
-      <Signup />
-
-    </>
+    <Suspense fallback={<Loader />}>
+      <RouterProvider router={MainRoutes} />
+    </Suspense>
   )
 }
 

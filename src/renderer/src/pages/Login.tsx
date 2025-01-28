@@ -1,65 +1,76 @@
-import { yupResolver } from '@hookform/resolvers/yup';
-import axios from 'axios';
-import { FC } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { toast } from 'react-toastify';
+import { yupResolver } from '@hookform/resolvers/yup'
+import axios from 'axios'
+import { FC } from 'react'
+import { Controller, SubmitHandler, useForm } from 'react-hook-form'
+import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router'
+import { Link } from 'react-router-dom'
+import { LoginFormDefaultValue, LoginFormSchema } from '@renderer/components/schema/LoginForm'
 
-import { LoginFormDefaultValue, LoginFormSchema } from '@renderer/components/schema/LoginForm';
-
-import Button from '@renderer/elements/Button';
-import { FacebookIcon, GoogleIcon } from '@renderer/elements/Icon';
-import InputField from '@renderer/elements/InputField';
-import Label from '@renderer/elements/Label';
-
+import { LOCAL_STORAGE_KEYS } from '@renderer/components/constants/Global'
+import { setToStorage, clearStorage } from '@renderer/components/constants/SetStorage'
+import Button from '@renderer/elements/Button'
+import { FacebookIcon, GoogleIcon } from '@renderer/elements/Icon'
+import InputField from '@renderer/elements/InputField'
+import Label from '@renderer/elements/Label'
+import { routes } from '@renderer/components/constants/Route'
 
 interface ILoginRequest {
-  email: string;
-  password: string;
+  email: string
+  password: string
 }
 
-type FieldKeys = 'email' | 'password';
+type FieldKeys = 'email' | 'password'
 
 const FormFields = [
   { name: 'Email', key: 'email', placeholder: 'Email' },
-  { name: 'Password', key: 'password', placeholder: 'Password' },
-];
+  { name: 'Password', key: 'password', placeholder: 'Password' }
+]
 
 const Login: FC = () => {
-
-
+  const navigate = useNavigate()
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors }
   } = useForm<ILoginRequest>({
     resolver: yupResolver<ILoginRequest>(LoginFormSchema),
-    defaultValues: LoginFormDefaultValue,
-  });
+    defaultValues: LoginFormDefaultValue
+  })
 
+  const API_BASE_URL = 'http://localhost:5000/api'
 
   const handleFormSubmit: SubmitHandler<ILoginRequest> = async (payload: ILoginRequest) => {
     try {
-      const response = await axios.post('/auth/login', payload);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, payload)
+
+      setToStorage(LOCAL_STORAGE_KEYS.AUTH_TOKEN, response.data.token)
+      setToStorage(LOCAL_STORAGE_KEYS.AUTH_ID, response.data._id)
+      setToStorage(LOCAL_STORAGE_KEYS.AUTH_NAME, response.data.name)
+      setToStorage(LOCAL_STORAGE_KEYS.AUTH_EMAIL, response.data.email)
+      clearStorage(LOCAL_STORAGE_KEYS.TEMP_EMAIL) 
+
+      toast.success('Login successful!')
+      navigate(routes.home.path)
     } catch (error: unknown) {
-      console.log(error);
+      console.log(error)
+
       if (axios.isAxiosError(error) && error.response) {
-        toast.error(error.response.data.message);
+        const errorMessage = error.response.data?.message || 'Invalid credentials!'
+        toast.error(errorMessage)
       } else {
-        toast.error('An unexpected error occurred');
+        toast.error('Network error! Please try again.')
       }
     }
-  };
+  }
 
   return (
     <>
       <div className="py-8 2xl:py-12">
         <div className="mr-16 2xl:mr-28">
-          <p className="flex justify-end text-sm">
+          <p className="flex justify-end text-sm ">
             Don't have an account?&nbsp;
-            <span className="font-medium text-primary">
-              Sign Up!&nbsp;
-            </span>
+            <Link to={routes.signup.path} className="text-blue-500 hover:underline">Sign Up!</Link>{' '}
           </p>
         </div>
 
@@ -95,7 +106,11 @@ const Login: FC = () => {
           <form className="flex w-96 flex-col gap-5" onSubmit={handleSubmit(handleFormSubmit)}>
             {FormFields.map((field) => (
               <div key={field.key}>
-                <Label customClass="mb-2 text-base text-dark-indigo" labelText={field.name} htmlFor={field.key} />
+                <Label
+                  customClass="mb-2 text-base text-dark-indigo"
+                  labelText={field.name}
+                  htmlFor={field.key}
+                />
                 <Controller
                   name={field.key as FieldKeys}
                   control={control}
@@ -111,7 +126,9 @@ const Login: FC = () => {
                   )}
                 />
                 {errors[field.key] && (
-                  <span className="mt-2 text-sm text-coral-sunset">{errors[field.key].message}</span>
+                  <span className="mt-2 text-sm text-coral-sunset">
+                    {errors[field.key].message}
+                  </span>
                 )}
               </div>
             ))}
@@ -129,7 +146,7 @@ const Login: FC = () => {
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
